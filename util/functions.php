@@ -16,7 +16,6 @@ function isLoggedIn(){
 	return isset($_SESSION['user']);
 }
 
-// 
 function redirect($path){
 	header("Location: $path");
 }

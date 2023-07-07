@@ -17,18 +17,17 @@ if(isLoggedIn()){
 			$stmt = $db -> prepare("SELECT uniqid, username, password FROM user WHERE username = ? AND password = ?");
 			$stmt -> bind_param('ss', $username, $password);
 			$stmt -> execute();
-			$result = $stmt -> get_result();
 			
 			// if there's a match, sign in and redirect
+			$result = $stmt -> get_result();
 			if($result -> num_rows > 0){
-				while($row = $result -> fetch_assoc()){
-					$user = new User();
-					$user -> set_id($row['uniqid']);
-					$user -> set_username($row['username']);
-					
-					$_SESSION['user'] = $user;
-					header('Location: dashboard.php');
-				}
+				$row = $result -> fetch_assoc();
+				$user = new User();
+				$user -> set_id($row['uniqid']);
+				$user -> set_username($row['username']);
+				
+				$_SESSION['user'] = $user;
+				header('Location: dashboard.php');
 			}else{
 				$error = 'Invalid login. Please try again.';
 			}

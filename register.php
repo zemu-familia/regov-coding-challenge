@@ -22,7 +22,6 @@ if(isLoggedIn()){
 				// if database insertion successful, redirect back to login page
 				if($stmt -> affected_rows == 1){
 					$_SESSION['success'] = "Registration successful. You can now log in!";
-					//echo $_SESSION['success'];
 					redirect('index.php');
 				}else{
 					if($stmt -> errno == 1062){

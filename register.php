@@ -1,5 +1,4 @@
 <?php
-require_once 'class/classes.php';
 require_once 'util/db.php';
 require_once 'util/functions.php';
 
@@ -12,25 +11,28 @@ if(isLoggedIn()){
 	if(postRequested()){
 		$username = filterStringPOST('username');
 		$password = filterStringPOST('password');
-		if($username != null && $password != null){
-			// basic login
-			$stmt = $db -> prepare("SELECT uniqid, username, password FROM user WHERE username = ? AND password = ?");
-			$stmt -> bind_param('ss', $username, $password);
-			$stmt -> execute();
-			$result = $stmt -> get_result();
-			
-			// if there's a match, sign in and redirect
-			if($result -> num_rows > 0){
-				while($row = $result -> fetch_assoc()){
-					$user = new User();
-					$user -> set_id($row['uniqid']);
-					$user -> set_username($row['username']);
-					
-					$_SESSION['user'] = $user;
-					header('Location: dashboard.php');
+		$reenter = filterStringPOST('passwordconfirmation');
+		if($username != null && $password != null && $reenter != null){
+			// if inputs are valid, insert into table
+			if($password == $reenter){
+				$stmt = $db -> prepare("INSERT INTO user(username, password) VALUES(?, ?)");
+				$stmt -> bind_param('ss', $username, $password);
+				$stmt -> execute();
+				
+				// if database insertion successful, redirect back to login page
+				if($stmt -> affected_rows == 1){
+					$_SESSION['success'] = "Registration successful. You can now log in!";
+					//echo $_SESSION['success'];
+					redirect('index.php');
+				}else{
+					if($stmt -> errno == 1062){
+						$error = 'The username you chose has been taken. Please try another one.';
+					}else{
+						$error = 'Registration failed. Please try again.';
+					}
 				}
 			}else{
-				$error = 'Invalid login. Please try again.';
+				$error = 'Passwords do not match.';
 			}
 		}else{
 			$error = 'Please fill in all the fields.';
@@ -52,29 +54,26 @@ if(isLoggedIn()){
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 	<div class="container rounded text-center p-4 mt-4">
 		<form method="post">
-			<h1 class="fs-4">Sign in</h1>
+			<h1 class="fs-4">Register</h1>
 			<div class="form-floating mb-3">
-				<input type="text" class="form-control" id="username" name="username" placeholder="Insert username">
+				<input type="text" class="form-control" id="username" name="username" placeholder="Insert username" <?= isset($username) ? "value='$username'" : ''?>>
 				<label for="username">Username</label>	
 			</div>
 			<div class="form-floating mb-3">
 				<input type="password" class="form-control" id="password" name="password" placeholder="Insert password">
 				<label for="password">Password</label>	
 			</div>
-			<input type="submit" class="btn btn-primary" value="Sign In">
+			<div class="form-floating mb-3">
+				<input type="password" class="form-control" id="passwordconfirmation" name="passwordconfirmation" placeholder="Re-enter password">
+				<label for="passwordconfirmation">Re-enter Password</label>	
+			</div>
+			<input type="submit" class="btn btn-primary" value="Register">
 		</form>
-		<p class="form-text mt-2">Don't have an account? <a href="register.php">Register</a>!</p>
+		<p class="form-text mt-2">Already have an account? <a href="index.php">Sign in</a>!</p>
 		<?php
 		// display error message if there is one
 		if(isset($error)){
 			echo "<p style='color:red'>$error</p>";
-		}
-		
-		// display success message if registration is successful
-		if(isset($_SESSION['success'])){
-			echo "<p style='color:blue'>" . $_SESSION['success'] . "</p>";
-			// unset variable to prevent displaying of message if page is accessed later
-			unset($_SESSION['success']);
 		}
 		?>
 	</div>
